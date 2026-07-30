@@ -11,14 +11,14 @@ Simulated market-data API returning commodity prices in GHS.
 
 ```bash
 npm install
-npm run dev -- --port 3102
+npm run dev
 ```
 
 Then call:
 
 ```bash
-curl http://localhost:3102/api/prices
-curl http://localhost:3102/api/health
+curl http://localhost:3002/api/prices
+curl http://localhost:3002/api/health
 ```
 
 ## Deploying to Vercel
