@@ -1,6 +1,6 @@
 # Platform B
 
-Simulated market-data API returning commodity prices in GHS.
+Simulated market-data API returning commodity prices with TZS and corresponding USD values.
 
 ## Endpoints
 
