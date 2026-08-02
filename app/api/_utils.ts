@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 
 export const TZS_PER_USD = 2600;
-export const PRICE_DATE = "2026-08-02";
 
 export const commodities = [
-  { commodity: "MAIZE", baseUsdAmount: 42.5, market: "Dar Es Salaam" },
-  { commodity: "RICE", baseUsdAmount: 55.2, market: "Arusha (urban)" },
-  { commodity: "WHEAT", baseUsdAmount: 38.7, market: "Dodoma" },
-  { commodity: "COCOA", baseUsdAmount: 74.9, market: "Mbeya" },
-  { commodity: "COFFEE", baseUsdAmount: 68.4, market: "Moshi" }
+  { commodity: "MAIZE", baseUsdAmount: 43.5, market: "Dar Es Salaam", priceDate: "2026-07-29" },
+  { commodity: "RICE", baseUsdAmount: 54.4, market: "Arusha (urban)", priceDate: "2026-07-30" },
+  { commodity: "WHEAT", baseUsdAmount: 39.3, market: "Dodoma", priceDate: "2026-07-31" },
+  { commodity: "COCOA", baseUsdAmount: 76.1, market: "Mbeya", priceDate: "2026-08-01" },
+  { commodity: "COFFEE", baseUsdAmount: 67.2, market: "Moshi", priceDate: "2026-08-02" }
 ] as const;
 
 export const corsHeaders = {
