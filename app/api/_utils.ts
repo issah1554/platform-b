@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 export const TZS_PER_USD = 2600;
+export const PRICE_DATE = "2026-08-02";
 
 export const commodities = [
   { commodity: "MAIZE", baseUsdAmount: 42.5, market: "Dar Es Salaam" },
@@ -31,11 +32,6 @@ export function optionsResponse() {
     status: 204,
     headers: corsHeaders
   });
-}
-
-export function randomUsdAmount(baseAmount: number) {
-  const change = 1 + (Math.random() - 0.5) * 0.08;
-  return Number((baseAmount * change).toFixed(2));
 }
 
 export function toTzs(usdAmount: number) {

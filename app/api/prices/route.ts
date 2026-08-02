@@ -1,4 +1,4 @@
-import { commodities, optionsResponse, randomUsdAmount, toTzs, withCors } from "../_utils";
+import { PRICE_DATE, commodities, optionsResponse, toTzs, withCors } from "../_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +8,7 @@ export function GET() {
   return withCors({
     source_name: "Platform B",
     data: commodities.map((item) => {
-      const amountUsd = randomUsdAmount(item.baseUsdAmount);
+      const amountUsd = item.baseUsdAmount;
 
       return {
         commodity: item.commodity,
@@ -19,6 +19,7 @@ export function GET() {
           reference: "USD"
         },
         market: item.market,
+        price_date: PRICE_DATE,
         updated_at: updatedAt
       };
     })
