@@ -21,22 +21,41 @@ let localQuotes: LocalQuoteItem[] = commodities.map((c, index) => ({
   recorded_date: c.priceDate
 }));
 
+// Timeout helper to prevent hanging if Supabase is unreachable or slow
+async function withTimeout<T>(promise: PromiseLike<T>, timeoutMs = 2500): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("Supabase query timeout")), timeoutMs);
+  });
+
+  try {
+    const result = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timer!);
+    return result;
+  } catch (err) {
+    clearTimeout(timer!);
+    throw err;
+  }
+}
+
 export async function GET() {
   const updatedAt = new Date().toISOString();
 
   if (isSupabaseConfigured && supabase) {
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from("platform_b_prices")
         .select("*")
         .order("created_at", { ascending: false });
+
+      const { data, error } = await withTimeout(query, 2500);
 
       if (!error && data && data.length > 0) {
         return withCors({
           source_name: "Platform B (v2 API)",
           db_source: "Supabase DB (platform_b_prices)",
           version: "v2",
-          data: data.map((item) => ({
+          data: data.map((item: any) => ({
             id: item.id,
             crop_name: item.crop_name ?? item.commodity ?? "MAIZE",
             amount_tzs: Number(item.amount_tzs),
@@ -52,7 +71,7 @@ export async function GET() {
         });
       }
     } catch (err) {
-      console.error("Platform B Supabase fetch error:", err);
+      console.warn("Platform B Supabase query fallback triggered:", err);
     }
   }
 
@@ -85,22 +104,25 @@ export async function POST(request: Request) {
     let createdRecord = null;
 
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase
-        .from("platform_b_prices")
-        .insert({
-          crop_name: cropVal,
-          amount_usd: usdVal,
-          amount_tzs: tzsVal,
-          trading_hub: hubVal,
-          recorded_date: dateVal
-        })
-        .select("*")
-        .single();
+      try {
+        const query = supabase
+          .from("platform_b_prices")
+          .insert({
+            crop_name: cropVal,
+            amount_usd: usdVal,
+            amount_tzs: tzsVal,
+            trading_hub: hubVal,
+            recorded_date: dateVal
+          })
+          .select("*")
+          .single();
 
-      if (!error && data) {
-        createdRecord = data;
-      } else if (error) {
-        console.error("Supabase insert error:", error);
+        const { data, error } = await withTimeout(query, 2500);
+        if (!error && data) {
+          createdRecord = data;
+        }
+      } catch (err) {
+        console.warn("Supabase insert timeout or error:", err);
       }
     }
 
@@ -135,22 +157,27 @@ export async function PUT(request: Request) {
     let updatedRecord = null;
 
     if (isSupabaseConfigured && supabase && !id.startsWith("local-b-")) {
-      const { data, error } = await supabase
-        .from("platform_b_prices")
-        .update({
-          crop_name: body.crop_name,
-          amount_usd: Number(body.amount_usd),
-          amount_tzs: Number(body.amount_tzs),
-          trading_hub: body.trading_hub,
-          recorded_date: body.recorded_date,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", id)
-        .select("*")
-        .single();
+      try {
+        const query = supabase
+          .from("platform_b_prices")
+          .update({
+            crop_name: body.crop_name,
+            amount_usd: Number(body.amount_usd),
+            amount_tzs: Number(body.amount_tzs),
+            trading_hub: body.trading_hub,
+            recorded_date: body.recorded_date,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", id)
+          .select("*")
+          .single();
 
-      if (!error && data) {
-        updatedRecord = data;
+        const { data, error } = await withTimeout(query, 2500);
+        if (!error && data) {
+          updatedRecord = data;
+        }
+      } catch (err) {
+        console.warn("Supabase update timeout or error:", err);
       }
     }
 
@@ -181,7 +208,11 @@ export async function DELETE(request: Request) {
     }
 
     if (isSupabaseConfigured && supabase && !id.startsWith("local-b-")) {
-      await supabase.from("platform_b_prices").delete().eq("id", id);
+      try {
+        await withTimeout(supabase.from("platform_b_prices").delete().eq("id", id), 2500);
+      } catch (err) {
+        console.warn("Supabase delete timeout or error:", err);
+      }
     }
 
     localQuotes = localQuotes.filter((item) => item.id !== id);

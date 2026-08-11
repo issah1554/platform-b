@@ -42,7 +42,10 @@ export default function PlatformBDashboard() {
   const fetchQuotes = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v2/prices");
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+      const res = await fetch("/api/v2/prices", { signal: controller.signal });
+      clearTimeout(timer);
       const data = await res.json();
       if (data.data) {
         setQuotes(data.data);
@@ -131,7 +134,10 @@ export default function PlatformBDashboard() {
     setApiLoading(true);
     const start = performance.now();
     try {
-      const res = await fetch("/api/v2/prices");
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+      const res = await fetch("/api/v2/prices", { signal: controller.signal });
+      clearTimeout(timer);
       const data = await res.json();
       const end = performance.now();
       setApiLatency(Math.round(end - start));
