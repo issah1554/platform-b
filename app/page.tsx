@@ -38,6 +38,11 @@ export default function PlatformBDashboard() {
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [apiLoading, setApiLoading] = useState(false);
   const [apiLatency, setApiLatency] = useState<number | null>(null);
+  const [seedStatus, setSeedStatus] = useState<{ loading: boolean; message: string | null; error: string | null }>({
+    loading: false,
+    message: null,
+    error: null
+  });
 
   const fetchQuotes = async () => {
     setLoading(true);
@@ -64,6 +69,25 @@ export default function PlatformBDashboard() {
   useEffect(() => {
     fetchQuotes();
   }, []);
+
+  const seedFabricatedCsv = async () => {
+    if (!confirm("This will insert fabricated CSV rows into platform_b_prices. Continue?")) return;
+
+    setSeedStatus({ loading: true, message: null, error: null });
+    try {
+      const res = await fetch("/api/seed-fabricated", { method: "POST" });
+      const data = await res.json();
+
+      if (data.success) {
+        setSeedStatus({ loading: false, message: data.message, error: null });
+        fetchQuotes();
+      } else {
+        setSeedStatus({ loading: false, message: null, error: data.error || "Seeding failed" });
+      }
+    } catch (err: any) {
+      setSeedStatus({ loading: false, message: null, error: err.message });
+    }
+  };
 
   const handleOpenAdd = () => {
     setEditingQuote(null);
@@ -232,15 +256,29 @@ export default function PlatformBDashboard() {
             </select>
           </div>
 
-          <div style={{ display: "flex", gap: 12 }}>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <button className="btn-ghost" onClick={fetchQuotes}>
               Refresh Quotes
+            </button>
+            <button className="btn-indigo" onClick={seedFabricatedCsv} disabled={seedStatus.loading}>
+              {seedStatus.loading ? "Seeding..." : "Seed Fabricated CSV"}
             </button>
             <button className="btn-indigo" onClick={handleOpenAdd}>
               + Add Crop Quote
             </button>
           </div>
         </div>
+
+        {seedStatus.message && (
+          <div style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.35)", borderRadius: 8, padding: "10px 16px", marginBottom: 16, color: "#86efac", fontSize: 13 }}>
+            {seedStatus.message}
+          </div>
+        )}
+        {seedStatus.error && (
+          <div style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)", borderRadius: 8, padding: "10px 16px", marginBottom: 16, color: "#fca5a5", fontSize: 13 }}>
+            {seedStatus.error}
+          </div>
+        )}
 
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: "var(--text-secondary)" }}>Loading v2 quotes...</div>
